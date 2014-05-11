@@ -22,6 +22,7 @@ import openfl.utils.SystemPath;
 #end
 
 
+@:access(flash.media.Sound)
 class DefaultAssetLibrary extends AssetLibrary {
 	
 	
@@ -29,13 +30,18 @@ class DefaultAssetLibrary extends AssetLibrary {
 	public static var path (default, null) = new Map <String, String> ();
 	public static var type (default, null) = new Map <String, AssetType> ();
 	
-	
 	public function new () {
 		
 		super ();
 		
 		#if flash
 		
+		path.set ("assets/pixelated.ttf", "assets/pixelated.ttf");
+		type.set ("assets/pixelated.ttf", Reflect.field (AssetType, "font".toUpperCase ()));
+		path.set ("assets/run.ass", "assets/run.ass");
+		type.set ("assets/run.ass", Reflect.field (AssetType, "text".toUpperCase ()));
+		path.set ("assets/runner_sprite.png", "assets/runner_sprite.png");
+		type.set ("assets/runner_sprite.png", Reflect.field (AssetType, "image".toUpperCase ()));
 		
 		
 		#elseif html5
@@ -44,56 +50,90 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		try {
-			
-			#if blackberry
-			var bytes = ByteArray.readFile ("app/native/manifest");
-			#elseif tizen
-			var bytes = ByteArray.readFile ("../res/manifest");
-			#elseif emscripten
-			var bytes = ByteArray.readFile ("assets/manifest");
-			#else
-			var bytes = ByteArray.readFile ("manifest");
-			#end
-			
-			if (bytes != null) {
+		#if (windows || mac || linux)
+		
+		var loadManifest = false;
+		loadManifest = true;
+		loadManifest = true;
+		loadManifest = true;
+		
+		
+		#else
+		
+		var loadManifest = true;
+		
+		#end
+		
+		if (loadManifest) {
+			try {
 				
-				bytes.position = 0;
+				#if blackberry
+				var bytes = ByteArray.readFile ("app/native/manifest");
+				#elseif tizen
+				var bytes = ByteArray.readFile ("../res/manifest");
+				#elseif emscripten
+				var bytes = ByteArray.readFile ("assets/manifest");
+				#else
+				var bytes = ByteArray.readFile ("manifest");
+				#end
 				
-				if (bytes.length > 0) {
+				if (bytes != null) {
 					
-					var data = bytes.readUTFBytes (bytes.length);
+					bytes.position = 0;
 					
-					if (data != null && data.length > 0) {
+					if (bytes.length > 0) {
 						
-						var manifest:Array<AssetData> = Unserializer.run (data);
+						var data = bytes.readUTFBytes (bytes.length);
 						
-						for (asset in manifest) {
+						if (data != null && data.length > 0) {
 							
-							path.set (asset.id, asset.path);
-							type.set (asset.id, asset.type);
+							var manifest:Array<AssetData> = Unserializer.run (data);
 							
+							for (asset in manifest) {
+								
+								if (!className.exists(asset.id)) {
+									
+									path.set (asset.id, asset.path);
+									type.set (asset.id, asset.type);
+									
+								}
+							}
+						
 						}
-						
-					}
 					
+					}
+				
+				} else {
+				
+					trace ("Warning: Could not load asset manifest");
+				
 				}
-				
-			} else {
-				
+			
+			} catch (e:Dynamic) {
+			
 				trace ("Warning: Could not load asset manifest");
-				
+			
 			}
-			
-		} catch (e:Dynamic) {
-			
-			trace ("Warning: Could not load asset manifest");
-			
+		
 		}
 		
 		#end
 		
 	}
+	
+	
+	#if html5
+	private function addEmbed(id:String, kind:String, value:Dynamic):Void {
+		className.set(id, value);
+		type.set(id, Reflect.field(AssetType, kind.toUpperCase()));
+	}
+	
+	
+	private function addExternal(id:String, kind:String, value:String):Void {
+		path.set(id, value);
+		type.set(id, Reflect.field(AssetType, kind.toUpperCase()));
+	}
+	#end
 	
 	
 	public override function exists (id:String, type:AssetType):Bool {
@@ -157,9 +197,13 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return BitmapData.fromImage (path.get (id));
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), BitmapData);
+		
+		#elseif openfl_html5
+		
+		return BitmapData.fromImage (ApplicationMain.images.get (path.get (id)));
 		
 		#elseif js
 		
@@ -167,7 +211,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return BitmapData.load (path.get (id));
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), BitmapData);
+		else return BitmapData.load (path.get (id));
 		
 		#end
 		
@@ -180,9 +225,13 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), ByteArray);
+		
+		#elseif openfl_html5
+		
+		return null;
 		
 		#elseif js
 		
@@ -216,7 +265,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return ByteArray.readFile (path.get (id));
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), ByteArray);
+		else return ByteArray.readFile (path.get (id));
 		
 		#end
 		
@@ -235,7 +285,11 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Font (path.get (id));
+		if (className.exists(id)) {
+			var fontClass = className.get(id);
+			Font.registerFont(fontClass);
+			return cast (Type.createInstance (fontClass, []), Font);
+		} else return new Font (path.get (id));
 		
 		#end
 		
@@ -246,11 +300,18 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#if pixi
 		
-		//return null;		
+		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), Sound);
+		
+		#elseif openfl_html5
+		
+		var sound = new Sound ();
+		sound.__buffer = true;
+		sound.load (new URLRequest (path.get (id)));
+		return sound; 
 		
 		#elseif js
 		
@@ -258,7 +319,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Sound (new URLRequest (path.get (id)), null, true);
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), Sound);
+		else return new Sound (new URLRequest (path.get (id)), null, true);
 		
 		#end
 		
@@ -286,7 +348,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), Sound);
 		
@@ -296,7 +358,58 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Sound (new URLRequest (path.get (id)), null, type.get (id) == MUSIC);
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), Sound);
+		else return new Sound (new URLRequest (path.get (id)), null, type.get (id) == MUSIC);
+		
+		#end
+		
+	}
+	
+	
+	public override function getText (id:String):String {
+		
+		#if js
+		
+		var bytes:ByteArray = null;
+		var data = ApplicationMain.urlLoaders.get (path.get (id)).data;
+		
+		if (Std.is (data, String)) {
+			
+			return cast data;
+			
+		} else if (Std.is (data, ByteArray)) {
+			
+			bytes = cast data;
+			
+		} else {
+			
+			bytes = null;
+			
+		}
+		
+		if (bytes != null) {
+			
+			bytes.position = 0;
+			return bytes.readUTFBytes (bytes.length);
+			
+		} else {
+			
+			return null;
+		}
+		
+		#else
+		
+		var bytes = getBytes (id);
+		
+		if (bytes == null) {
+			
+			return null;
+			
+		} else {
+			
+			return bytes.readUTFBytes (bytes.length);
+			
+		}
 		
 		#end
 		
@@ -477,6 +590,49 @@ class DefaultAssetLibrary extends AssetLibrary {
 	}
 	
 	
+	public override function loadText (id:String, handler:String -> Void):Void {
+		
+		#if js
+		
+		if (path.exists (id)) {
+			
+			var loader = new URLLoader ();
+			loader.addEventListener (Event.COMPLETE, function (event:Event) {
+				
+				handler (event.currentTarget.data);
+				
+			});
+			loader.load (new URLRequest (path.get (id)));
+			
+		} else {
+			
+			handler (getText (id));
+			
+		}
+		
+		#else
+		
+		var callback = function (bytes:ByteArray):Void {
+			
+			if (bytes == null) {
+				
+				handler (null);
+				
+			} else {
+				
+				handler (bytes.readUTFBytes (bytes.length));
+				
+			}
+			
+		}
+		
+		loadBytes (id, callback);
+		
+		#end
+		
+	}
+	
+	
 }
 
 
@@ -485,7 +641,18 @@ class DefaultAssetLibrary extends AssetLibrary {
 
 
 
+
+
+
 #elseif html5
+
+@:keep class __ASSET__assets_pixelated_ttf extends flash.text.Font { #if (!openfl_html5_dom) public function new () { super (); fontName = "assets/pixelated.ttf"; } #end }
+
+
+
+
+#elseif (windows || mac || linux)
+
 
 
 

@@ -1,0 +1,12 @@
+-main ApplicationMain 
+-lib openfl
+-cp Source
+-D tools=1.4.0
+-D web
+-swf-version 11.2
+-swf Export/flash/bin/RunnyMan.swf
+-swf-header 800:600:30:FFFFFF
+-cp Export/flash/haxe
+#--remap nme:flash
+#--no-inline
+-debug

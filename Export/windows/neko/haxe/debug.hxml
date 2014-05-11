@@ -2,13 +2,13 @@
 -lib openfl
 -lib openfl-native
 -cp Source
--D tools=1.2.7
+-D tools=1.4.0
 -D lime_native
 -D no-compilation
 -D windows
 -D desktop
+--macro allowPackage('flash')
 -cp Export/windows/neko/haxe
 -neko Export/windows/neko/obj/ApplicationMain.n
---macro allowPackage("flash")
 --macro keep("Main")
 -debug

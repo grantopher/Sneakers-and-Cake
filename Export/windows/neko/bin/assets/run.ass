@@ -1,0 +1,15 @@
+{
+	"animations" : [ 	{"name" : "run", "frames" : [
+			{ "x": 2,	"y" : 90, "width" : 36, "height" : 34, "dur" : 5 },
+			{ "x": 39, 	"y" : 90, "width" : 36, "height" : 34, "dur" : 5 },
+			{ "x": 71, 	"y" : 90, "width" : 36, "height" : 34, "dur" : 5 },
+			{ "x": 108, "y" : 90, "width" : 36, "height" : 34, "dur" : 5 },
+			{ "x": 140, "y" : 90, "width" : 36, "height" : 34, "dur" : 5 },
+			{ "x": 170, "y" : 90, "width" : 36, "height" : 34, "dur" : 5 }
+		]},
+						{"name" : "jump", "frames": [
+		{ "x": 0, "y" : 0, "width" : 50, "height" : 50 },
+		{ "x": 0, "y" : 0, "width" : 50, "height" : 50 }
+		]}
+	]
+}
