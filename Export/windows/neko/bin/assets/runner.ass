@@ -1,0 +1,15 @@
+{
+	"animations" : [ 	{"name" : "run", "loops" : true, "frames" : [
+			{ "x": 4,	"y" : 95, "width" : 33, "height" : 30, "dur" : 1, "r_point" : {"ref_x" : 14, "ref_y" : 30} },
+			{ "x": 43, 	"y" : 94, "width" : 29, "height" : 31, "dur" : 1, "r_point" : {"ref_x" : 11, "ref_y" : 31} },
+			{ "x": 81, 	"y" : 92, "width" : 24, "height" : 33, "dur" : 1, "r_point" : {"ref_x" : 6, "ref_y" : 33} },
+			{ "x": 111, "y" : 92, "width" : 24, "height" : 33, "dur" : 1, "r_point" : {"ref_x" : 6, "ref_y" : 33} },
+			{ "x": 146, "y" : 92, "width" : 24, "height" : 33, "dur" : 1, "r_point" : {"ref_x" : 6, "ref_y" : 33} },
+			{ "x": 180, "y" : 94, "width" : 29, "height" : 31, "dur" : 1, "r_point" : {"ref_x" : 11, "ref_y" : 31} }
+		]},
+						{"name" : "jump", "loops" : false, "frames": [
+		{ "x": 10, "y" : 160, "width" : 12, "height" : 39, "dur" : 15, "r_point" : {"ref_x" : 5, "ref_y" : 39} },
+		{ "x": 26, "y" : 161, "width" : 25, "height" : 33, "dur" : 1, "r_point" : {"ref_x" : 6, "ref_y" : 33} }
+		]}
+	]
+}

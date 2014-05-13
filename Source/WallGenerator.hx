@@ -5,8 +5,9 @@ import flash.Lib;
 import Wall;
 import flash.events.EventDispatcher;
 import flash.events.Event;
+import flash.geom.Rectangle;
 import Runner;
-import Signal;
+import Globals;
 
 class WallGenerator extends Sprite {
 	private var wall_holder:	Array <Dynamic>;
@@ -16,16 +17,11 @@ class WallGenerator extends Sprite {
 	private var screen_width:	Int;
 	private var gap_size:		Int;
 
-	private var char_right:		Int;
-	private var char_left:		Int;
-
 	public var next_wall:		Wall;
 	private var wall_index:		Int;
 	public var points:			Int;
 
 	private var runner:			Runner;
-
-	public var sunshine:		Signal;
 
 	public function new(_runner: Runner) {
 		super();
@@ -36,8 +32,6 @@ class WallGenerator extends Sprite {
 		
 		generate_walls(true);
 
-		sunshine = new Signal();
-		sunshine.shout('go');
 	}
 
 	private function init() {
@@ -51,14 +45,11 @@ class WallGenerator extends Sprite {
 		size_range 	= Globals.WALL_MAX - Globals.WALL_MIN;
 		wall_height = Std.int(stg_hgt * Globals.GROUND);
 		gap_size 	= Std.int(stg_hgt * Globals.GAP_SIZE);
-		char_right  = Std.int((screen_width / 2) + (Globals.RUNNER_SIZE / 2));
-		char_left 	= Std.int((screen_width / 2) - (Globals.RUNNER_SIZE / 2));
 
 		points = 0;
 	}
 
 	public function generate_walls(?_init:Bool) {
-		trace('creating new walls...');
 
 		gen_width 	 = (_init) ? 0 : find_width();
 		var breaker			= 0;
@@ -67,7 +58,6 @@ class WallGenerator extends Sprite {
 			breaker++;
 			if(breaker > 15) break;  //to prevent infinite loops
 		}
-			trace('completed wall build...');
 	}
 
 	private function find_width() :Int {
@@ -83,7 +73,6 @@ class WallGenerator extends Sprite {
 	}
 
 	private function add_wall() :Int {
-		trace('adding wall...');
 
 		var n_wall 	= new Wall(size_range, wall_height, gap_size);
 		n_wall.x 	= gen_width + ((wall_holder[0] != null) ? wall_holder[0].left_x() : 0);
@@ -94,32 +83,40 @@ class WallGenerator extends Sprite {
 		return Std.int(n_wall.wall_width());
 	}
 
-	public function move() {
+	public function move(bounds : Rectangle) {
 		x -= Globals.RUN_SPEED;
 		if((wall_holder[0].right_x() + x) < 0) shift_walls();
 
 		if(next_wall == null) next_wall = wall_holder[0];
 
-		if((next_wall.right_x() + x) < char_left) score();
+		if((next_wall.right_x() + x) < bounds.x) score();
 		
 	}
 
 	private function score() {
+		trace(points);
 		points += 1;
 		find_next_wall();
 	}
 
-	public function col_test() : Bool {
-		var top_box = next_wall.get_top_box();
-		var bot_box = next_wall.get_bot_box();
+	public function col_test(bounds : Rectangle) : Int {
+		var char_right 	= bounds.x + bounds.width;
+		var char_left 	= bounds.x;
+		var char_top 	= bounds.y;
+		var char_bot 	= bounds.y + bounds.height;
+		var top_box 	= next_wall.get_top_box();
+		var bot_box		= next_wall.get_bot_box();
+		graphics.clear();
+		graphics.beginFill(0x0000FF, .5);
+		graphics.drawRect(bounds.x -x, bounds.y -y, bounds.width, bounds.height);
 		if((next_wall.left_x() + x) < char_right && (next_wall.right_x() + x) > char_left) {
-			if(runner.y < top_box || (runner.y + Globals.RUNNER_SIZE) > bot_box) return true;
+			if(char_top < top_box) return 1;
+			else if(char_bot > bot_box) return 2;
 		}
-		return false;
+		return 0;
 	}
 
 	private function shift_walls() {
-		trace('removing first wall...');
 
 		removeChild(wall_holder[0]);
 		wall_holder.shift();
@@ -131,7 +128,7 @@ class WallGenerator extends Sprite {
 		var w_h_len = wall_holder.length;
 		for (p in 0...wall_holder.length) {
 			var wall_in_qstn:Wall = wall_holder[p];
-			if((wall_in_qstn.left_x() + x) > char_right){
+			if((wall_in_qstn.left_x() + x) > runner.get_bounds().x+runner.get_bounds().width){
 				next_wall = wall_in_qstn;
 				break;
 			}

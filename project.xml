@@ -10,5 +10,7 @@
 	
 	<assets path="Assets" rename="assets" exclude="openfl.svg" />
 	<icon path="Assets/openfl.svg" />
+	<window width="720" height="1280" />
+
 	
 </project>
